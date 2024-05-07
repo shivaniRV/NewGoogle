@@ -1,6 +1,6 @@
 <script setup>
-import TheWelcome from '../components/TheWelcome.vue'
-import "ant-design-vue/dist/antd.esm"
+import TheWelcome from "../components/TheWelcome.vue";
+// import "ant-design-vue/es/style/index.css";
 </script>
 
 <template>

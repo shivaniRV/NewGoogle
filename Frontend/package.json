@@ -9,10 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "ant-design-vue": "^4.2.0",
+    "@ant-design/icons-vue": "^7.0.1",
+    "@googlemaps/js-api-loader": "^1.16.6",
+    "@googlemaps/markerclusterer": "^2.5.3",
+    "ant-design-vue": "^4.2.1",
+    "axios": "^1.6.8",
+    "bootstrap": "^5.3.3",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-google-autocomplete": "^1.1.4",
+    "vue-mq": "^1.0.1",
+    "vue-router": "^4.3.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

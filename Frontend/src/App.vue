@@ -1,19 +1,28 @@
 <script setup>
-//import SearchBar from './components/Searchbar.vue';
-import Nav from './components/Nav.vue'
-
+/* eslint-disable no-undef */
+import { ref, computed, onMounted } from "vue";
+import Nav from "./components/Nav.vue";
+import Searchbar from "./components/Searchbar.vue";
+import Card from "./components/Card.vue";
+import Footer from "./components/Footer.vue";
+import { RouterView } from "vue-router";
 </script>
 
 <template>
   <main>
-    <Nav/>
-    <SearchBar />
+    <Nav />
+    <br />
+
+    <Card :cards="cards" />
+    <split />
+
+    <Footer />
   </main>
 </template>
 
 <style scoped>
 .container {
-  background-color: blanchedalmond;
+  background-color: #ececec;
   text-align: center;
   display: flex;
   justify-content: space-between;

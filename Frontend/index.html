@@ -1,13 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite App</title>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw&libraries=places"></script> -->
+
+    <!-- <script>
+      let autocomplete;
+      function initAutocomplete() {
+        autocomplete = new google.maps.places.Autocomplete({
+          types: ["establishments"],
+          componentRestrictions: { country: ["IN"] },
+          feilds: ["place_id", "geometery", "name"],
+        });
+        autocomplete.addListener("place_changed", onPlaceChanged);
+      }
+      function onPlaceChanged() {
+        var place = autocomplete.getPlace();
+
+        if (!place.geometry) {
+          document.getElementById("autocomplete").placeholder = "Enter a place";
+        } else {
+          document.getElementById("details").innerHTML = place.name;
+        }
+      }
+    </script>
+    <script
+      async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw&&libraries=places&callback=initAutocomplete"
+      async
+      defer
+    ></script> -->
   </body>
 </html>
