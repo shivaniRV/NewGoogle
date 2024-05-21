@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import {
   HomeFilled,
   PhoneOutlined,
@@ -11,15 +11,18 @@ import { RouterView } from "vue-router";
 import { useGeolocation } from "../userGeolocation";
 import { Loader } from "@googlemaps/js-api-loader";
 import VueGoogleAutocomplete from "vue-google-autocomplete";
+
 import axios from "axios";
+//import updateMarkersOnMap from "./updateMarkersOnMap.vue";
+import api, {
+  sendLocation,
+  enterLocation,
+  filterStates as filterStatesApi,
+} from "../apiservice";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const props = defineProps({
   cards: Array,
-});
-const filteredCards = computed(() => {
-  return props.cards.filter((card) =>
-    card.location.toLowerCase().includes(filterText.value.toLowerCase())
-  );
 });
 
 const handleCallButtonClick = () => {
@@ -30,54 +33,229 @@ const handleEmailClick = () => {
   window.open(`mailto:${card.email}`, "_self");
 };
 
-const cardData = ref([
-  {
-    id: 1,
-    name: "African Black Cafe",
-    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
-    phone: "333-3333-333",
-    email: "support@agilelogix.com",
-    image:
-      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
-  },
+//search functionality
 
-  {
-    id: 2,
-    name: "African Black Cafe",
-    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
-    phone: "333-3333-333",
-    email: "support@agilelogix.com",
-    image:
-      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
-  },
-  {
-    id: 3,
-    name: "African Black Cafe",
-    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
-    phone: "333-3333-333",
-    email: "support@agilelogix.com",
-    image:
-      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
-  },
-  {
-    id: 4,
-    name: "African Black Cafe",
-    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
-    phone: "333-3333-333",
-    email: "support@agilelogix.com",
-    image:
-      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
-  },
-  {
-    id: 5,
-    name: "African Black Cafe",
-    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
-    phone: "333-3333-333",
-    email: "support@agilelogix.com",
-    image:
-      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
-  },
+const search = ref("");
+
+// watch(search, () => {
+//   card.value = card.filter((card) =>
+//     card.name.toLowerCase().includes(search.value.toLowerCase())
+//   );
+// });
+//apis
+//1.lat,long:
+const message = ref("");
+let latitude = "";
+let longitude = "";
+
+const locationInput = ref("");
+
+// const submitLocation = async () => {
+//   try {
+//     const response = await axios.post(
+//       "http://localhost:8080/api/current-location",
+//       {
+//         latitude,
+//         longitude,
+//       }
+//     );
+//     console.log("Location entered successfully:", response.data.message);
+//   } catch (error) {
+//     console.error(
+//       "Error entering location:",
+//       error.response?.data?.error || error.message
+//     );
+//   }
+// };
+const submitLocation = async () => {
+  try {
+    if (!latitude || !longitude) {
+      console.error("Latitude and Longitude are required");
+      return;
+    }
+    const response = await sendLocation(latitude, longitude);
+    console.log("Location entered successfully:", response.data.message);
+  } catch (error) {
+    console.error(
+      "Error entering location:",
+      error.response?.data?.error || error.message
+    );
+  }
+};
+
+const EnterLocation = async () => {
+  try {
+    const response = await axios.get(
+      `/api/enter-location?location=${location}`
+    );
+    console.log("Location entered successfully:", response.data.message);
+    console.log("locationInput:", locationInput, "Type:", typeof locationInput);
+  } catch (error) {
+    console.error(
+      "Error entering location:",
+      error.response?.data?.error || error.message
+    );
+  }
+};
+// const EnterLocation = async () => {
+//   try {
+//     const response = await enterLocation(locationInput.value);
+//     console.log("Location entered successfully:", response.data.message);
+//   } catch (error) {
+//     console.error(
+//       "Error entering location:",
+//       error.response?.data?.error || error.message
+//     );
+//   }
+// };
+
+const states = ref([
+  { id: 1, name: "Maharashtra" },
+  { id: 2, name: "Telangana" },
+  { id: 3, name: "Punjab" },
+  { id: 4, name: "Gujarat" },
+  { id: 5, name: "Madhya Pradesh" },
+  { id: 6, name: "Uttar Pradesh" },
 ]);
+
+const filterStates = async (selectedState) => {
+  try {
+    console.log("Selected state:", selectedState);
+    const response = await axios.post(
+      "http://localhost:8080/api/filter-states",
+      { states: [selectedState.name] }
+    );
+    console.log("Filtered states response:", response.data);
+  } catch (error) {
+    console.error(
+      "Error filtering states:",
+      error.response?.data?.error || error.message
+    );
+  }
+};
+
+const selectedState = ref(null);
+const selectedCategory = ref(null);
+
+const handleStateSelection = (e) => {
+  selectedState.value = states.value.find((state) => state.id === e);
+  fetchStores();
+};
+
+const filterCards = () => {
+  fetchStores();
+};
+// const filterStoresByCategory = (stores) => {
+//   return axios.post("http://localhost:8080/api/filter_category", { stores });
+// };
+//api for filtercategory
+const category = ref([
+  { id: 1, name: "Stationary" },
+  { id: 2, name: "Clothing" },
+  { id: 3, name: "Electronics" },
+  { id: 4, name: "Grocery" },
+  { id: 5, name: "Furniture" },
+]);
+
+const filterStoresByCategory = async (selectedStore) => {
+  try {
+    console.log("Selected store:", selectedStore);
+    const response = await axios.post(
+      "http://localhost:8080/api/filter_category",
+      { stores: [{ category: selectedStore.name }] }
+    );
+    console.log("Filtered stores response:", response.data);
+  } catch (error) {
+    console.error(
+      "Error filtering stores:",
+      error.response?.data?.error || error.message
+    );
+  }
+};
+
+const handleStoreSelection = (e) => {
+  selectedCategory.value = category.value.find((store) => store.id === e);
+  fetchStores();
+};
+
+// const cardData = ref([]);
+// const currentPage = ref(1);
+// const totalPages = ref(0);
+// const limit = 10; // Set limit to 10 cards per page
+
+// const fetchStores = async (page = 1) => {
+//   try {
+//     const response = await axios.get(
+//       `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
+//     );
+//     cardData.value = response.data.stores;
+//     totalPages.value = response.data.totalPages;
+//     currentPage.value = response.data.currentPage;
+//   } catch (error) {
+//     console.error("Error fetching stores:", error.message);
+//   }
+// };
+
+// // Call fetchStores when the component is mounted
+// onMounted(() => fetchStores(currentPage.value));
+
+// // Function to handle pagination
+// const goToPage = (page) => {
+//   if (page > 0 && page <= totalPages.value) {
+//     fetchStores(page);
+//   }
+// };
+const cardData = ref([]);
+const currentPage = ref(1);
+const totalPages = ref(0);
+const limit = 10;
+// const fetchStores = async (page = 1) => {
+//   try {
+//     const response = await axios.get(
+//       `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
+//     );
+//     cardData.value = response.data.stores;
+//     totalPages.value = response.data.totalPages;
+//     currentPage.value = response.data.currentPage;
+
+//     updateMarkersOnMap();
+//   } catch (error) {
+//     console.error("Error fetching stores:", error.message);
+//   }
+// };
+const fetchStores = async (page = 1) => {
+  try {
+    const params = {
+      page,
+      limit,
+      state: selectedState.value,
+      category: selectedCategory.value,
+      search: search.value,
+    };
+
+    const response = await axios.get("http://localhost:8080/api/stores", {
+      params,
+    });
+    cardData.value = response.data.stores;
+    totalPages.value = response.data.totalPages;
+    currentPage.value = response.data.currentPage;
+
+    updateMarkersOnMap();
+  } catch (error) {
+    console.error("Error fetching stores:", error.message);
+  }
+};
+
+onMounted(() => fetchStores(currentPage.value));
+
+// Function to handle pagination
+const goToPage = async (page) => {
+  if (page > 0 && page <= totalPages.value) {
+    await fetchStoreData(page);
+    updateMarkersOnMap();
+  }
+};
+
 const GOOGLE_MAPS_API_KEY = "AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw";
 
 const { coords } = useGeolocation();
@@ -88,207 +266,200 @@ const currPos = computed(() => ({
 
 const otherPos = ref(null);
 
+const storeInfo = ref([]);
+const mapDiv = ref(null);
+const map = ref(null);
+let markerCluster = null;
+
 const loader = new Loader({
   apiKey: GOOGLE_MAPS_API_KEY,
   libraries: ["places"],
   version: "weekly",
 });
 
-// const Places = await loader.importLibrary("places");
-// const center = { lat: 34.082298, lng: -82.284777 };
-
-// const defaultBounds = {
-//   north: center.lat + 0.1,
-//   south: center.lat - 0.1,
-//   east: center.lng + 0.1,
-//   west: center.lng - 0.1,
-// };
-// const input = document.getElementById("place"); //binds to our input element
-
-// console.log("input", input);
-// const options = {
-//   bounds: defaultBounds, //optional
-//   types: ["establishment"], //optioanl
-//   componentRestrictions: { country: "us" }, //limiter for the places api search
-//   fields: ["address_components", "geometry", "icon", "name"], //allows the api to accept these inputs and return similar ones
-//   strictBounds: false, //optional
-// };
-
-// const autocomplete = new Places.Autocomplete(input, options);
-
-// console.log("autocomplete", autocomplete); //optional log but will show you the available methods and properties of the new instance of Places.
-
-// //add the place_changed listener to display results when inputs change
-// autocomplete.addListener("place_changed", () => {
-//   const place = autocomplete.getPlace(); //this callback is inherent you will see it if you logged autocomplete
-//   console.log("place", place);
-// });
-
-const mapDiv = ref(null);
-let map = ref(null);
-let clickListener = null;
-// let isGoogleApiLoaded = ref(false);
-
-onMounted(async () => {
-  await loader.load();
-  // isGoogleApiLoaded.value = true;
-  map.value = new google.maps.Map(mapDiv.value, {
-    center: currPos.value,
-    zoom: 7,
-  });
-  clickListener = map.value.addListener(
-    "click",
-    ({ latLng: { lat, lng } }) => (otherPos.value = { lat: lat(), lng: lng() })
-  );
-});
-
-onMounted(async () => {
-  if (clickListener) clickListener.remove();
-});
-
-// onBeforeUnmount(() => {
-//   if (clickListener) clickListener.remove();
-// });
-
-// onMounted(){
-//   const originAutocomplete=new google.maps.places.Autocomplete(
-//     this.$refs["origin"],
-//     {
-//       bounds
-//     }z
-//   );
-
-// }
-
-const locatorButtonPressed = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.getAddressFrom(position.coords.latitude, position.coords.latitude);
-
-        // console.log(latitude.value, longitude.value);
-      },
-      (error) => {
-        errorMessage.value = error.message;
-        console.log(errorMessage.value);
-      }
+const fetchStoreData = async (page = 1) => {
+  try {
+    console.log("Fetching store data...", page);
+    const response = await axios.get(
+      `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
     );
-  } else {
-    console.log("Your browser does not support geolocation.");
+
+    console.log("Store data fetched:", response.data);
+
+    if (response.data && Array.isArray(response.data.stores)) {
+      storeInfo.value = response.data.stores;
+      totalPages.value = response.data.totalPages;
+      currentPage.value = response.data.currentPage;
+
+      updateMarkersOnMap();
+    } else {
+      console.error("Fetched data is not an array:", response.data);
+      storeInfo.value = [];
+    }
+
+    // storeInfo.value = response.data;
+    // updateMarkersOnMap();
+  } catch (error) {
+    console.error("Error fetching store data:", error.message);
   }
 };
 
-const getAddressFrom = (lat, long) => {
-  axios
-    .get(
-      "https://maps.googleapis.com/maps/api/geocode/json?latlng=" +
-        lat +
-        "," +
-        long +
-        "&key=AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw"
-    )
-    .then((response) => {
-      if (response.data.error_message) {
-        console.log(response.data.error_message);
-      } else {
-        console.log(response.results[0].formatted_address);
-      }
-    })
-    .catch((error) => {
-      console.log("error.message");
+onMounted(async () => {
+  console.log("Component mounted, loading Google Maps...");
+
+  await loader.load();
+  console.log("Google Maps loaded");
+
+  map.value = new google.maps.Map(mapDiv.value, {
+    center: { lat: 20, lng: 80 }, // Default center if no stores are available
+    zoom: 7,
+  });
+  console.log("Google Map initialized");
+
+  fetchStoreData();
+});
+
+const updateMarkersOnMap = () => {
+  if (!map || !storeInfo.value.length === 0) {
+    console.log("Map not initialized or no store data available");
+
+    return;
+  }
+
+  if (markerCluster) {
+    console.log("Clearing existing markers...");
+
+    markerCluster.clearMarkers();
+  }
+  // console.log("Updating markers on map...");
+
+  console.log("Creating new markers...");
+
+  const markers = storeInfo.value.map((card) => {
+    // console.log(
+    //   `Store: ${card.name}, Latitude: ${card.latitude}, Longitude: ${card.longitude}`
+    // );
+
+    const marker = new google.maps.Marker({
+      position: { lat: card.latitude, lng: card.longitude },
+      map: map.value,
+      title: card.name,
     });
+
+    const infoWindow = new google.maps.InfoWindow({
+      content: `<h3>${card.name}</h3><p>${card.address}</p> <p>${card.email}</p>`,
+    });
+
+    marker.addListener("click", () => {
+      infoWindow.open(map.value, marker);
+    });
+
+    return marker;
+  });
+
+  markerCluster = new MarkerClusterer({
+    map: map.value,
+    markers,
+    imagePath:
+      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
+  });
+  console.log("Markers updated and clustered");
 };
+
+const nextPage = async () => {
+  if (currentPage.value < totalPages.value) {
+    await fetchStoreData(currentPage.value + 1);
+    updateMarkersOnMap();
+  }
+};
+
+const prevPage = async () => {
+  if (currentPage.value > 1) {
+    await fetchStoreData(currentPage.value - 1);
+    updateMarkersOnMap();
+  }
+};
+
+onBeforeUnmount(() => {
+  console.log("Component is about to unmount, clearing markers...");
+
+  if (markerCluster) {
+    markerCluster.clearMarkers();
+  }
+});
 </script>
 
 <template>
   <div class="container">
     <!-- Left Section -->
     <div class="left-section">
-      <template>
-        <a-page-header
-          style="border: 2px solid rgb(235, 237, 240)"
-          title="Title"
-          sub-title="This is a subtitle"
-          @back="() => null"
-      /></template>
-
       <div class="header-container">
         <a-card
           style="width: 300px; display: flex; justify-content: space-between"
         >
-          <!-- <h3 class="left-header">Find a store</h3>
-          <h3 class="right-header" @click="locatorButtonPressed">
-            Use Current location
-          </h3> -->
-          <input type="text" placeholder="current address" />
-          <i class="dot clicrcle click" @click="locatorButtonPressed()"></i>
+          <!-- Input for entering location -->
+          <input
+            type="text"
+            v-model.trim="search"
+            placeholder="Enter Desired location"
+            @input="filterCards"
+          />
+          <button @click="EnterLocation">Submit</button>
+          <p>{{ message }}</p>
 
-          <!-- <a-space direction="vertical">
-            <a-input-search
-              class="search"
-              ref="origin"
-              v-model:value="value"
-              placeholder="Enter Location Here"
-              style="width: 250px"
-              @search="onSearch"
+          <!-- Inputs for latitude and longitude -->
+          <p>Your current location:</p>
+          <div>
+            <label for="latitude">Latitude:</label>
+            <input
+              type="text"
+              id="latitude"
+              v-model="latitude"
+              placeholder="Enter latitude"
             />
-          </a-space> -->
-          <!-- 
-          <vue-google-autocomplete
-            id="map"
-            classname="form-control"
-            placeholder="Start typing"
-            v-on:placechanged="getAddressData"
-          >
-          </vue-google-autocomplete> -->
 
-          <input id="place" type="text" placeholder="Enter a location" />
+            <label for="longitude">Longitude:</label>
+            <input
+              type="text"
+              id="longitude"
+              v-model="longitude"
+              placeholder="Enter longitude"
+            />
 
+            <button @click="submitLocation">Submit Location</button>
+          </div>
           <br />
+
+          <!-- Dropdown for filtering stores -->
           <div class="dropdown-left">
             <a-dropdown>
               <a class="ant-dropdown-link" @click.prevent>Filter Stores by</a>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item>
-                    <a href="javascript:;">Stationary</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;"> General Stores</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;"> Medical</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;"> Cake Shop</a>
+                  <a-menu-item
+                    @click="handleStoreSelection(store.id)"
+                    v-for="store in category"
+                    :key="store.id"
+                  >
+                    <a href="javascript:;">{{ store.name }}</a>
                   </a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
           </div>
 
+          <!-- Dropdown for selecting a state -->
           <div class="dropdown-right">
             <a-dropdown>
               <a class="ant-dropdown-link" @click.prevent>State</a>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item>
-                    <a href="javascript:;"> Maharahtra</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;">Telengana</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;">Punjab</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;">Gujrat</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;">M.P</a>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <a href="javascript:;">U.P</a>
+                  <a-menu-item
+                    @click="handleStateSelection(state.id)"
+                    v-for="state in states"
+                    :key="state.id"
+                  >
+                    <a href="javascript:;">{{ state.name }}</a>
                   </a-menu-item>
                 </a-menu>
               </template>
@@ -297,10 +468,21 @@ const getAddressFrom = (lat, long) => {
         </a-card>
       </div>
 
+      <!-- Example cards for stores -->
+
+      <div class="container">
+        <!-- Render store cards dynamically -->
+      </div>
+
+      <!-- old code -->
+
       <div v-for="card in cardData" :key="card.id" class="card">
         <a-card style="width: 300px">
           <h2>{{ card.name }}</h2>
-          <HomeFilled class="icon-large" />
+          <p>{{ card.email }}</p>
+          <p>{{ card.phone }}</p>
+          <!-- <p>{{ card.latitude }}</p>
+          <p>{{ card.longitude }}</p> -->
 
           <a-dropdown>
             <a class="ant-dropdown-link" @click.prevent>Stores Opens at:</a>
@@ -310,28 +492,26 @@ const getAddressFrom = (lat, long) => {
                   <a href="javascript:;">Monday: 9am-10pm</a>
                 </a-menu-item>
                 <a-menu-item>
-                  <a href="javascript:;"> Tuesday: 9am-10pm</a>
+                  <a href="javascript:;">Tuesday: 9am-10pm</a>
                 </a-menu-item>
                 <a-menu-item>
-                  <a href="javascript:;">wednesday: 9am-8pm</a>
+                  <a href="javascript:;">Wednesday: 9am-8pm</a>
                 </a-menu-item>
                 <a-menu-item>
-                  <a href="javascript:;"> Thursday: 11am-7pm</a>
+                  <a href="javascript:;">Thursday: 11am-7pm</a>
                 </a-menu-item>
                 <a-menu-item>
-                  <a href="javascript:;"> Friday: 11am-7pm</a>
+                  <a href="javascript:;">Friday: 11am-7pm</a>
                 </a-menu-item>
                 <a-menu-item>
-                  <a href="javascript:;"> saturday: 11am-7pm</a>
+                  <a href="javascript:;">Saturday: 11am-7pm</a>
                 </a-menu-item>
               </a-menu>
             </template>
           </a-dropdown>
 
-          <p>{{ card.address }}</p>
-          <p @click="handleCallButtonClick">
-            <PhoneOutlined /> {{ card.phone }}
-          </p>
+          <p>Address:{{ card.address }}</p>
+          <p>contact.no:{{ card.mobile }}</p>
           <div class="buttons">
             <a-button
               type="primary"
@@ -346,29 +526,44 @@ const getAddressFrom = (lat, long) => {
           <br />
         </a-card>
       </div>
-
-      <!-- example -->
+      <div>
+        <a-button
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage <= 1"
+        >
+          Previous
+        </a-button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <a-button
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage >= totalPages"
+        >
+          Next
+        </a-button>
+        <!-- <button
+          @click="nextPage"
+          :disabled="currentPage.value === totalPages.value"
+        >
+          Next
+        </button> -->
+      </div>
     </div>
+    <!-- </div> -->
 
     <!-- Right Section (Map Image) -->
     <div class="right-section">
-      <!-- <img
-        class="map-image"
-        src="https://user-images.githubusercontent.com/3392975/135143029-20abd824-0f3e-4e28-bad3-327acf7aec04.png"
-      /> -->
-      <h4>Your Position</h4>
+      <!-- <h4>Your Position</h4>
       Latitude: {{ currPos.lat.toFixed(2) }}, Longitude:
       {{ currPos.lng.toFixed(2) }}
 
       <div class="m-auto">
         <h4>Clicked position</h4>
         <span v-if="otherPos">
-          Latitude:{{ otherPos.lat.toFixed(2) }},Longitude:{{
-            otherPos.lng.toFixed(2)
-          }}
+          Latitude: {{ otherPos.lat.toFixed(2) }}, Longitude:
+          {{ otherPos.lng.toFixed(2) }}
         </span>
-        <span v-else>click map to select a position</span>
-      </div>
+        <span v-else>Click map to select a position</span>
+      </div> -->
 
       <div ref="mapDiv" style="width: 100%; height: 80vh" />
     </div>
@@ -391,22 +586,21 @@ const getAddressFrom = (lat, long) => {
   top: 0;
 }
 .card-container .ant-card {
-  border-radius: 0; /* Remove border-radius */
+  border-radius: 0;
 }
 
 .right-section {
-  /* Maximize right section size */
   padding-left: 30px;
   display: flex;
-  flex-direction: column; /* Align items vertically */
+  flex-direction: column;
   width: 75%;
   margin-top: -10px;
-  align-items: flex-start; /* Align items to the top */
+  align-items: flex-start;
 }
 .icon-large {
-  font-size: 24px; /* Adjust the size as needed */
-  float: right; /* Align the icon to the right */
-  margin-top: -28px; /* Optional: Adjust top margin for spacing */
+  font-size: 24px;
+  float: right;
+  margin-top: -28px;
 }
 .search {
   align-items: start;
@@ -416,18 +610,17 @@ const getAddressFrom = (lat, long) => {
   width: 97%;
   align-items: center;
   margin-top: 20px;
-  /* Adjust image width as needed */
 }
 .black-button {
-  background-color: #000; /* Black background color */
-  color: #fff; /* White text color */
-  border-radius: 0; /* No border radius (sharp corners) */
-  border: none; /* No border */
+  background-color: #000;
+  color: #fff;
+  border-radius: 0;
+  border: none;
 }
 
 /* Hover style (optional) */
 .black-button:hover {
-  background-color: #333; /* Darker shade of black on hover */
+  background-color: #333;
 }
 .header-container {
   display: flex;
@@ -435,12 +628,12 @@ const getAddressFrom = (lat, long) => {
 }
 
 .left-header {
-  margin-right: 160px; /* Pushes the left header to the left */
+  margin-right: 160px;
 }
 
 .right-header {
   margin-top: -25px;
-  margin-left: 100px; /* Pushes the right header to the right */
+  margin-left: 100px;
 }
 .dropdown-left {
   margin-right: -45px;
@@ -452,7 +645,7 @@ const getAddressFrom = (lat, long) => {
 
 @media (min-width: 768px) {
   .card {
-    width: calc(50% - 20px); /* Two cards per row with some margin */
+    width: calc(50% - 20px);
   }
 }
 </style>

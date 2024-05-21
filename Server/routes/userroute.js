@@ -1,15 +1,29 @@
-const express= require('express')
-const { logincontroller, registercontroller } = require('../controllers/usercontroller')
+const express = require('express');
+const router = express.Router();
 
-//router object
-const router= express.Router()
+// POST /api/current-location - Handle current location POST requests
+router.post('/api/current-location', (req, res) => {
+ 
+});
 
-//router
-//POST ||Login
-router.post('/login',logincontroller);
 
-//register
-//POST\\Register 
-router.post('/register',registercontroller );
+router.get('/api/enter-location', (req, res) => {
+ 
+});
 
-module.exports=router
+// POST /api/filter-states - Handle filter states POST requests
+router.post('/api/filter-states', (req, res) => {
+  
+});
+
+// POST /api/filter_category - Handle filter category POST requests
+router.post('/api/filter_category', (req, res) => {
+ 
+});
+router.post('/api/login', (req, res) =>{
+
+});
+
+module.exports = router;
+
+

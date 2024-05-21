@@ -11,11 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@googlemaps/markerclusterer": "^2.5.3",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mongoose": "^8.3.2",
+    "faker": "^6.6.6",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.5",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.0"
   }

@@ -1,4 +1,4 @@
-// controllers/CurrentLocationController.js
+
 
 const currentLocationController = (req, res) => {
     const { latitude, longitude } = req.body;

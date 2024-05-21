@@ -4,6 +4,8 @@ import SearchBar from "./Searchbar.vue";
 import { useUserStore } from "../stores/Users";
 import { UserOutlined } from "@ant-design/icons-vue";
 import { RouterLink, useRouter } from "vue-router";
+import api from "../apiservice";
+import axios from "axios";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -20,6 +22,22 @@ const goToUsersProfile = () => {
   // Redirect to user's profile page
 };
 
+let username = "";
+let password = "";
+
+const handleLogin = async () => {
+  try {
+    const response = await axios.post("http://localhost:8080/api/login", {
+      username: username,
+      password: password,
+    });
+    const token = response.data.token;
+    localStorage.setItem("token", token);
+    console.log("Login successful");
+  } catch (error) {
+    console.error("Login error:", error.response.data.error);
+  }
+};
 const user = null;
 </script>
 
@@ -37,19 +55,32 @@ const user = null;
           <li><router-link to="/loginview">Simple Page</router-link></li>
         </ul> -->
 
-        <img
+        <!-- <img
           style="width: 40px"
           src="D:\storelocator\Frontend\src\assets\man_11311998.png"
           alt="Profile"
           @click="goToProfile"
-        />
-        <AuthModal ref="authModalRef" :isLogin="true" class="auth-button" />
+        /> -->
+        <div>
+          <h1>Login</h1>
+          <form @submit.prevent="handleLogin">
+            <label for="username">Username:</label>
+            <input type="text" id="username" v-model="username" required />
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" v-model="password" required />
+
+            <button type="submit">Login</button>
+          </form>
+        </div>
+      </div>
+      <!-- <AuthModal ref="authModalRef" :isLogin="true" class="auth-button" />
       </div>
 
       <div class="left-content" v-else>
         <a-button type="primary" @click="goToUsersProfile">Profile</a-button>
         <a-button type="primary" @click="handleLogout">Logout</a-button>
-      </div>
+      </div> -->
 
       <!-- <HomeOutlined /> -->
     </div>

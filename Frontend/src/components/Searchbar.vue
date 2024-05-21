@@ -4,11 +4,6 @@ const filterText = ref("");
 import { DownOutlined } from "@ant-design/icons-vue";
 
 const checked = false;
-// export { filterText };
-// const search=ref("");
-// watch(search,()=>{
-//   console.log()
-// })
 </script>
 
 <template>
