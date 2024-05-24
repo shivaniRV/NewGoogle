@@ -1,4 +1,204 @@
-<script setup>
+
+servver.js:
+const express= require('express')
+const cors= require('cors')
+const morgan =require('morgan')
+const dotenv= require('dotenv')
+const colors =require('colors')
+const connectdb = require('./config/connectdb')
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+const Store = require('./storemodal');
+//config dotenv file
+dotenv.config();
+
+
+//databse call
+connectdb();
+
+//rest object
+const app= express()
+
+//middleware
+app.use(morgan(`dev`))
+app.use(express.json())
+app.use((cors()))
+
+
+
+//
+
+//routes
+const port = 8080;
+
+// Middleware to parse JSON bodies
+app.use(bodyParser.json());
+
+const secretKey = 'THISISBESTLEANINGPROJECTFORSHIVANIRAJENDRAVYAS'; 
+
+// Sample data
+const stores = [
+    { id: 1, name: 'Store A', address: '123 Main St, City, Country', email: 'storea@example.com', phone: '123-456-7890' },
+    { id: 2, name: 'Store B', address: '456 Elm St, Town, Country', email: 'storeb@example.com', phone: '987-654-3210' },
+  
+];
+
+const validCategories = ["Stationary", "Clothing", "Electronics", "Grocery", "Furniture"];
+
+// API to get current location
+app.post('/api/current-location', (req, res) => {
+    const { latitude, longitude } = req.body;
+    if (latitude && longitude) {
+        res.json({ latitude, longitude });
+    } else {
+        res.status(400).json({ error: 'Latitude and Longitude are required' });
+    }
+});
+
+// API to enter location
+app.get('/api/enter-location', (req, res) => {
+    console.log(req.query);
+    const { location } = req.query;
+    
+    if (location) {
+        res.json({ message: `Location entered: ${location}` });
+    } else {
+        res.status(400).json({ error: 'Location is required' });
+    }
+});
+
+
+// API to filter states
+app.post('/api/filter-states', (req, res) => {
+    const { states } = req.body;
+    if (states && Array.isArray(states)) {
+        res.json({ states });
+        console.log(req.body);
+    } else {
+        res.status(400).json({ error: 'States array is required' });
+    }
+    
+});
+
+// API to filter stores by category
+// app.post('/api/filter_category', (req, res) => {
+//     const { stores } = req.body;
+//     if (stores && Array.isArray(stores)) {
+//         const filteredStores = stores.filter(store => validCategories.includes(store.category));
+//         res.json({ filteredStores });
+//     } else {
+//         res.status(400).json({ error: 'Stores array is required' });
+//     }
+// });
+// app.post('/api/filter_category', async (req, res) => {
+//     const { category } = req.body;
+//     try {
+//         const filteredStores = await Store.find({ category }); // Filter stores by category
+//         res.json(filteredStores);
+//     } catch (err) {
+//         res.status(500).send(err);
+//     }
+// });
+
+app.post('/api/filter_category', async (req, res) => {
+    const { category, page = 1, limit = 10 } = req.body;
+    try {
+        const limitNum = parseInt(limit, 10);
+        const pageNum = parseInt(page, 10);
+
+        const filteredStores = await Store.find({ category })
+            .limit(limitNum)
+            .skip((pageNum - 1) * limitNum)
+            .sort({ createdAt: -1 });
+
+        const count = await Store.countDocuments({ category });
+
+        res.status(200).json({
+            stores: filteredStores,
+            totalPages: Math.ceil(count / limitNum),
+            currentPage: pageNum,
+        });
+    } catch (err) {
+        res.status(500).send(err);
+    }
+});
+
+
+
+// API to get stores
+
+const getStores = async (req, res, next) => {
+    try {
+       
+        const { page = 1, limit = 10 } = req.query;
+
+        const pageNumber = Number(page);
+        const limitNumber = Number(limit);
+
+       
+        const skip = (pageNumber - 1) * limitNumber;
+
+     
+        const stores = await Store.find()
+            .limit(limitNumber)
+            .skip(skip)
+            .sort({ createdAt: -1 });
+
+        const totalStores = await Store.countDocuments();
+
+        return res.status(200).json({
+            stores,
+            totalPages: Math.ceil(totalStores / limitNumber),
+            currentPage: pageNumber,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+app.get('/api/stores', getStores);
+
+
+// API to login using JWT
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === 'shivani123' && password === '!213432') {
+        const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+        res.json({ token });
+    } else {
+        res.status(401).json({ error: 'Invalid username or password' });
+    }
+});
+
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNoaXZhbmkxMjMiLCJpYXQiOjE3MTU4MzE5NjAsImV4cCI6MTcxNTgzNTU2MH0.2mAecMpAiwcJj4N9nxztlmSJ-zA4gHm6DVtoVlc8r0E';
+
+jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) {
+        console.error('Token verification failed:', err);
+        return;
+    }
+
+    console.log('Decoded token:', decoded);
+});
+
+
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    methods: 'GET, POST',
+    allowedHeaders: 'Content-Type, Authorization',
+};
+
+// Use CORS middleware with options
+app.use(cors(corsOptions));
+
+
+// Start the server
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});
+
+
+card.vue<script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import {
   HomeFilled,
@@ -45,8 +245,9 @@ const search = ref("");
 //apis
 //1.lat,long:
 const message = ref("");
-let latitude = ref("");
-let longitude = ref("");
+let latitude = "";
+let longitude = "";
+
 const locationInput = ref("");
 
 // const submitLocation = async () => {
@@ -82,33 +283,13 @@ const submitLocation = async () => {
   }
 };
 
-// const EnterLocation = async () => {
-//   try {
-//     const response = await axios.get(
-//       `/api/enter-location?location=${location}`
-//     );
-//     console.log("Location entered successfully:", response.data.message);
-//     console.log("locationInput:", locationInput, "Type:", typeof locationInput);
-//   } catch (error) {
-//     console.error(
-//       "Error entering location:",
-//       error.response?.data?.error || error.message
-//     );
-//   }
-// };
 const EnterLocation = async () => {
   try {
-    const location = locationInput.value; // Access the actual value from the ref
     const response = await axios.get(
       `/api/enter-location?location=${location}`
     );
     console.log("Location entered successfully:", response.data.message);
-    console.log(
-      "locationInput:",
-      locationInput.value,
-      "Type:",
-      typeof locationInput.value
-    );
+    console.log("locationInput:", locationInput, "Type:", typeof locationInput);
   } catch (error) {
     console.error(
       "Error entering location:",
@@ -116,7 +297,6 @@ const EnterLocation = async () => {
     );
   }
 };
-
 // const EnterLocation = async () => {
 //   try {
 //     const response = await enterLocation(locationInput.value);
@@ -154,22 +334,17 @@ const filterStates = async (selectedState) => {
   }
 };
 
-const selectedState = ref(null);
-const selectedCategory = ref(null);
-
 const handleStateSelection = (e) => {
-  selectedState.value = states.value.find((state) => state.id === e);
-  fetchStores();
-};
-
-const filterCards = () => {
-  fetchStores();
+  const selectedState = states.value.find((state) => state.id === e);
+  if (selectedState) {
+    console.log("Handle state selection:", selectedState);
+    filterStates(selectedState);
+  }
 };
 
 // const filterStoresByCategory = (stores) => {
 //   return axios.post("http://localhost:8080/api/filter_category", { stores });
 // };
-
 //api for filtercategory
 const category = ref([
   { id: 1, name: "Stationary" },
@@ -196,8 +371,11 @@ const filterStoresByCategory = async (selectedStore) => {
 };
 
 const handleStoreSelection = (e) => {
-  selectedCategory.value = category.value.find((store) => store.id === e);
-  fetchStores();
+  const selectedStore = category.value.find((store) => store.id === e);
+  if (selectedStore) {
+    console.log("Handle store selection:", selectedStore);
+    filterStoresByCategory(selectedStore);
+  }
 };
 
 // const cardData = ref([]);
@@ -231,45 +409,22 @@ const cardData = ref([]);
 const currentPage = ref(1);
 const totalPages = ref(0);
 const limit = 10;
-// const fetchStores = async (page = 1) => {
-//   try {
-//     const response = await axios.get(
-//       `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
-//     );
-//     cardData.value = response.data.stores;
-//     totalPages.value = response.data.totalPages;
-//     currentPage.value = response.data.currentPage;
-
-//     updateMarkersOnMap();
-//   } catch (error) {
-//     console.error("Error fetching stores:", error.message);
-//   }
-// };
-
-const fetchStores = async (page = 1, lat, lng) => {
+const fetchStores = async (page = 1) => {
   try {
-    const params = {
-      page,
-      limit,
-      latitude: typeof lat === "number" && !isNaN(lat) ? lat : null,
-      longitude: typeof lng === "number" && !isNaN(lng) ? lng : null,
-      state: selectedState.value ? selectedState.value.name : "",
-      category: selectedCategory.value ? selectedCategory.value.name : "",
-      search: search.value,
-    };
-
-    const response = await axios.get("http://localhost:8080/api/stores", {
-      params,
-    });
+    const response = await axios.get(
+      `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
+    );
     cardData.value = response.data.stores;
     totalPages.value = response.data.totalPages;
     currentPage.value = response.data.currentPage;
+
     updateMarkersOnMap();
   } catch (error) {
     console.error("Error fetching stores:", error.message);
   }
 };
 
+// Call fetchStores when the component is mounted
 onMounted(() => fetchStores(currentPage.value));
 
 // Function to handle pagination
@@ -281,18 +436,6 @@ const goToPage = async (page) => {
 };
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw";
-
-const autocompleteOptions = {
-  bounds: {
-    north: 50.064192 + 0.1,
-    south: 50.064192 - 0.1,
-    east: -130.605469 + 0.1,
-    west: -130.605469 - 0.1,
-  },
-  componentRestrictions: { country: "IN" },
-  fields: ["address_components", "geometry", "icon", "name"],
-  strictBounds: false,
-};
 
 const { coords } = useGeolocation();
 const currPos = computed(() => ({
@@ -339,9 +482,6 @@ const fetchStoreData = async (page = 1) => {
     console.error("Error fetching store data:", error.message);
   }
 };
-const handleSearch = () => {
-  fetchStores(1);
-};
 
 onMounted(async () => {
   console.log("Component mounted, loading Google Maps...");
@@ -375,6 +515,10 @@ const updateMarkersOnMap = () => {
   console.log("Creating new markers...");
 
   const markers = storeInfo.value.map((card) => {
+    // console.log(
+    //   `Store: ${card.name}, Latitude: ${card.latitude}, Longitude: ${card.longitude}`
+    // );
+
     const marker = new google.maps.Marker({
       position: { lat: card.latitude, lng: card.longitude },
       map: map.value,
@@ -422,127 +566,6 @@ onBeforeUnmount(() => {
     markerCluster.clearMarkers();
   }
 });
-// const getAddressData = (addressData, placeResultData) => {
-//   latitude.value = placeResultData.geometry.location.lat();
-//   longitude.value = placeResultData.geometry.location.lng();
-//   fetchStores(1); // Fetch stores based on the updated latitude and longitude
-// };
-
-// const getAddressData = (addressData, placeResultData) => {
-//   const { lat, lng } = placeResultData.geometry.location; // Extract lat and lng from placeResultData
-//   if (typeof lat === "number" && !isNaN(lat)) {
-//     latitude.value = lat.toFixed(6);
-//   } else {
-//     console.error("Invalid latitude value:", lat);
-//   }
-
-//   if (typeof lng === "number" && !isNaN(lng)) {
-//     longitude.value = lng.toFixed(6);
-//   } else {
-//     console.error("Invalid longitude value:", lng);
-//   }
-//   console.log("Address data: ", addressData);
-
-//   fetchStores(1);
-
-//   console.log("Address data: ", addressData);
-//   if (addressData && addressData.geometry) {
-//     const location = addressData.geometry.location;
-//     latitude = location.lat();
-//     longitude = location.lng();
-//     submitLocation(); // Calling the submitLocation function here
-//   }
-// };
-
-const getAddressData = (addressData, placeResultData) => {
-  const { lat, lng } = placeResultData.geometry.location; // Extract lat and lng from placeResultData
-  if (typeof lat === "number" && !isNaN(lat)) {
-    latitude.value = lat.toFixed(6);
-  } else {
-    console.error("Invalid latitude value:", lat);
-  }
-
-  if (typeof lng === "number" && !isNaN(lng)) {
-    longitude.value = lng.toFixed(6);
-  } else {
-    console.error("Invalid longitude value:", lng);
-  }
-
-  fetchStores(1, lat, lng);
-
-  console.log("Address data: ", addressData);
-
-  setTimeout(() => {
-    if (
-      addressData &&
-      typeof addressData.latitude === "number" &&
-      typeof addressData.longitude === "number"
-    ) {
-      console.log(
-        "Address latitude:",
-        addressData.latitude,
-        "Address longitue:",
-        addressData.longitude
-      );
-    } else {
-      console.error(
-        "Address latitude & longitude is invalid or not available."
-      );
-    }
-  }, 1000);
-
-  if (addressData && addressData.geometry) {
-    const location = addressData.geometry.location;
-    latitude = location.lat();
-    longitude = location.lng();
-    submitLocation(); // Calling the submitLocation function here
-  }
-};
-onMounted(() => {
-  const numericLat = Number(latitude.value);
-  const numericLng = Number(longitude.value);
-  fetchStores(currentPage.value, numericLat, numericLng);
-});
-
-/////////////////////////////////
-
-onMounted(async () => {
-  const loader = new Loader({
-    apiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
-    version: "weekly",
-  });
-  console.log("loader", loader);
-  const Places = await loader.importLibrary("places");
-
-  // the center, defaultbounds are not necessary but are best practices to limit/focus search results
-  const center = { lat: 34.082298, lng: -82.284777 };
-  // Create a bounding box with sides ~10km away from the center point
-  const defaultBounds = {
-    north: center.lat + 0.1,
-    south: center.lat - 0.1,
-    east: center.lng + 0.1,
-    west: center.lng - 0.1,
-  };
-
-  const input = document.getElementById("place"); //binds to our input element
-
-  console.log("input", input);
-  const options = {
-    bounds: defaultBounds,
-    types: ["establishment"],
-    componentRestrictions: { country: "IN" },
-    fields: ["address_components", "geometry", "icon", "name"],
-    strictBounds: false,
-  };
-
-  const autocomplete = new Places.Autocomplete(input, options);
-
-  console.log("autocomplete", autocomplete);
-  autocomplete.addListener("place_changed", () => {
-    const place = autocomplete.getPlace();
-    console.log("place", place);
-  });
-});
 </script>
 
 <template>
@@ -553,33 +576,30 @@ onMounted(async () => {
         <a-card
           style="width: 300px; display: flex; justify-content: space-between"
         >
-          <div class="heading" style="align-content: flex-start">
-            <h2>Search Stores Here:</h2>
-          </div>
-
-          <!-- Input for entering location -->
-
-          <vue-google-autocomplete
+          <!-- <VueGoogleAutocomplete
+            ref="autoCompleteRef"
             id="map"
             classname="form-control"
-            placeholder="Enter Destination"
-            :api-key="GOOGLE_MAPS_API_KEY"
-            :options="autocompleteOptions"
-            @placechanged="getAddressData"
-          ></vue-google-autocomplete>
-          <!-- <a-input-search
+            placeholder="Enter a location"
+            v-model="locationInput"
+            :api-key="AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw"
+            @placechanged="placeSelected"
+          />
+          <button @click="EnterLocation">Submit</button>
+          <p>{{ message }}</p> -->
+
+          <!-- Input for entering location -->
+          <input
             type="text"
             v-model.trim="search"
             placeholder="Enter Desired location"
-            enter-button
-            @click="filterCards()"
-            size="large"
-          /> -->
-          <!-- <button @click="filterCards()">Submit</button> -->
-          <!-- <p>{{ message }}</p> -->
+            @input="filterCards"
+          />
+          <button @click="EnterLocation">Submit</button>
+          <p>{{ message }}</p>
 
           <!-- Inputs for latitude and longitude -->
-          <!-- <p>Your current location:</p>
+          <p>Your current location:</p>
           <div>
             <label for="latitude">Latitude:</label>
             <input
@@ -599,7 +619,7 @@ onMounted(async () => {
 
             <button @click="submitLocation">Submit Location</button>
           </div>
-          <br /> -->
+          <br />
 
           <!-- Dropdown for filtering stores -->
           <div class="dropdown-left">
@@ -617,15 +637,7 @@ onMounted(async () => {
                 </a-menu>
               </template>
             </a-dropdown>
-            <br />
           </div>
-          <button @click="handleSearch()">Search</button>
-          <br />
-          <br />
-
-          <!-- <div class="submit">
-            <a-button @click="filterCards()">Submit</a-button>
-          </div> -->
 
           <!-- Dropdown for selecting a state -->
           <div class="dropdown-right">
@@ -659,8 +671,7 @@ onMounted(async () => {
         <a-card style="width: 300px">
           <h2>{{ card.name }}</h2>
           <p>{{ card.email }}</p>
-          <p>Address:{{ card.address }}</p>
-          <p>contact.no:{{ card.mobile }}</p>
+          <p>{{ card.phone }}</p>
           <!-- <p>{{ card.latitude }}</p>
           <p>{{ card.longitude }}</p> -->
 
@@ -690,6 +701,8 @@ onMounted(async () => {
             </template>
           </a-dropdown>
 
+          <p>Address:{{ card.address }}</p>
+          <p>contact.no:{{ card.mobile }}</p>
           <div class="buttons">
             <a-button
               type="primary"
@@ -764,21 +777,22 @@ onMounted(async () => {
   top: 0;
 }
 .card-container .ant-card {
-  border-radius: 0;
+  border-radius: 0; /* Remove border-radius */
 }
 
 .right-section {
+  /* Maximize right section size */
   padding-left: 30px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Align items vertically */
   width: 75%;
   margin-top: -10px;
-  align-items: flex-start;
+  align-items: flex-start; /* Align items to the top */
 }
 .icon-large {
-  font-size: 24px;
-  float: right;
-  margin-top: -28px;
+  font-size: 24px; /* Adjust the size as needed */
+  float: right; /* Align the icon to the right */
+  margin-top: -28px; /* Optional: Adjust top margin for spacing */
 }
 .search {
   align-items: start;
@@ -788,19 +802,18 @@ onMounted(async () => {
   width: 97%;
   align-items: center;
   margin-top: 20px;
+  /* Adjust image width as needed */
 }
 .black-button {
-  background-color: #000;
-  color: #fff;
-  border-radius: 0;
-  border: none;
+  background-color: #000; /* Black background color */
+  color: #fff; /* White text color */
+  border-radius: 0; /* No border radius (sharp corners) */
+  border: none; /* No border */
 }
-.submit {
-  margin-bottom: 10px;
-}
+
 /* Hover style (optional) */
 .black-button:hover {
-  background-color: #333;
+  background-color: #333; /* Darker shade of black on hover */
 }
 .header-container {
   display: flex;
@@ -808,29 +821,24 @@ onMounted(async () => {
 }
 
 .left-header {
-  margin-right: 160px;
+  margin-right: 160px; /* Pushes the left header to the left */
 }
 
 .right-header {
   margin-top: -25px;
-  margin-left: 100px;
+  margin-left: 100px; /* Pushes the right header to the right */
 }
 .dropdown-left {
-  margin-right: -55px;
-  margin-left: 50px;
+  margin-right: -45px;
 }
 .dropdown-right {
-  margin-top: -55px;
+  margin-top: -25px;
   margin-right: 230px;
 }
 
 @media (min-width: 768px) {
   .card {
-    width: calc(50% - 20px);
+    width: calc(50% - 20px); /* Two cards per row with some margin */
   }
-}
-.heading {
-  align-items: start;
-  align-content: flex-start;
 }
 </style>
