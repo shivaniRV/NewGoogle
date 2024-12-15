@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+<<<<<<< HEAD
     "@fawmi/vue-google-maps": "^0.9.79",
+=======
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
     "@googlemaps/js-api-loader": "^1.16.6",
     "@googlemaps/markerclusterer": "^2.5.3",
     "ant-design-vue": "^4.2.1",

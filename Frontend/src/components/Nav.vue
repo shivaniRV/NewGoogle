@@ -1,9 +1,12 @@
 <script setup>
 import SearchBar from "./Searchbar.vue";
 import AuthModal from "./AuthModal.vue";
+// import AuthModal from "./AuthModal.vue";
 import { useUserStore } from "../stores/Users";
 import { UserOutlined } from "@ant-design/icons-vue";
 import { RouterLink, useRouter } from "vue-router";
+import api from "../apiservice";
+import axios from "axios";
 import api from "../apiservice";
 import axios from "axios";
 
@@ -69,24 +72,16 @@ const user = null;
           @click="goToProfile"
         /> -->
         <div>
-          <a-button type="primary" @click="showModal">Login</a-button>
-          <a-modal v-model:open="open" title="Login" @ok="submit">
-            <!-- <h1>Login</h1> -->
-            <form @submit.prevent="handleLogin">
-              <label for="username">Username:</label>
-              <input type="text" id="username" v-model="username" required />
-              <br />
-              <label for="password">Password:</label>
-              <input
-                type="password"
-                id="password"
-                v-model="password"
-                required
-              />
-              <br />
-              <a-button type="submit">Login</a-button>
-            </form>
-          </a-modal>
+          <h1>Login</h1>
+          <form @submit.prevent="handleLogin">
+            <label for="username">Username:</label>
+            <input type="text" id="username" v-model="username" required />
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" v-model="password" required />
+
+            <button type="submit">Login</button>
+          </form>
         </div>
       </div>
       <!-- <AuthModal ref="authModalRef" :isLogin="true" class="auth-button" />

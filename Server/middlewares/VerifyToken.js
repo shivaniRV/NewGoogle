@@ -22,6 +22,7 @@ function verifyToken(req, res, next) {
 }
 
 module.exports = verifyToken;
+<<<<<<< HEAD
 
 
 
@@ -755,3 +756,5 @@ module.exports = verifyToken;
 
 
 
+=======
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b

@@ -6,6 +6,7 @@ const Store = require('./storemodal');
 
 //faker.private.locale()= "en_IN";
 
+<<<<<<< HEAD
 const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
     "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
@@ -16,6 +17,8 @@ const indianStates = [
 ];
 
 
+=======
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 const minLat = 6;
 const maxLat = 35;
 const minLng = 68;
@@ -27,11 +30,16 @@ if (!mongoUri) {
 }
 
 function generateRandomLatitude() {
+<<<<<<< HEAD
     return faker.number.float({ min: minLat, max: maxLat });
+=======
+    return faker.datatype.float({ min: minLat, max: maxLat });
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 }
 
 // Function to generate random longitude within the specified range
 function generateRandomLongitude() {
+<<<<<<< HEAD
     return faker.number.float({ min: minLng, max: maxLng });
 }
 
@@ -55,6 +63,9 @@ function generateRandomIndianState() {
 function generateRandomCategory() {
     const randomIndex = faker.datatype.number({ min: 0, max: category.length - 1 });
     return category[randomIndex];
+=======
+    return faker.datatype.float({ min: minLng, max: maxLng });
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 }
 
 // Connect to MongoDB without deprecated options
@@ -67,6 +78,7 @@ const updateStores = async () => {
 
     const stores = [];
     for (let i = 0; i < 5000; i++) {
+<<<<<<< HEAD
         const latitude = generateRandomLatitude();
         const longitude = generateRandomLongitude();
 
@@ -88,6 +100,18 @@ const updateStores = async () => {
     }
 
    
+=======
+        stores.push({
+            name: faker.company.name(),
+            latitude: generateRandomLatitude(),
+            longitude: generateRandomLongitude(),
+            address: faker.address.streetAddress(),
+            address: faker.location.streetAddress(),
+            email: faker.internet.email(),
+            mobile: faker.phone.number()
+        });
+    }
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
     await Store.insertMany(stores);
     console.log('Data updated successfully!');
     mongoose.disconnect();

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
  const mongoose = require('mongoose');
 
 const State = [
@@ -42,6 +43,19 @@ const storeSchema = new mongoose.Schema({
 // Create a 2dsphere index on the location field for geospatial queries
 storeSchema.index({ location: '2dsphere' });
 
+=======
+const mongoose = require('mongoose');
+
+const storeSchema = new mongoose.Schema({
+    name: String,
+    latitude: Number,
+    longitude: Number,
+    address: String,
+    email: String,
+    mobile: String
+});
+
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 const Store = mongoose.model('Store', storeSchema);
 
 module.exports = Store;

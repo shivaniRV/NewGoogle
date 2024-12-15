@@ -158,23 +158,38 @@ app.post('/api/filter_category', async (req, res) => {
 
 const getStores = async (req, res, next) => {
     try {
+<<<<<<< HEAD
         const { page = 1, limit = 10, state, category, latitude, longitude } = req.query;
+=======
+        console.log(req.query);
+        const { page = 1, limit = 10, state, category, search } = req.query;
+       
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 
         const pageNumber = Number(page);
         const limitNumber = Number(limit);
         const skip = (pageNumber - 1) * limitNumber;
 
+<<<<<<< HEAD
+=======
+       
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
         const query = {};
 
         if (state) {
             query.state = state;
+<<<<<<< HEAD
 
         }
         console.log(state)
+=======
+        }
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 
         if (category) {
             query.category = category;
         }
+<<<<<<< HEAD
         console.log(category)
 
         if (!isNaN(latitude) && !isNaN(longitude) && latitude>0 && longitude>0) { // Check if latitude and longitude are valid numbers
@@ -190,6 +205,11 @@ const getStores = async (req, res, next) => {
                     $maxDistance: 10000
                 }
             };
+=======
+
+        if (search) {
+            query.name = { $regex: search, $options: 'i' }; 
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
         }
 
         const stores = await Store.find(query)
@@ -212,6 +232,10 @@ const getStores = async (req, res, next) => {
 app.get('/api/stores', getStores);
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2564fb1a6c8811227e1121b81c5c755e1eb5995b
 // API to login using JWT
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;

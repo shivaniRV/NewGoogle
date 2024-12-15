@@ -1,12 +1,5 @@
 <script setup>
-import {
-  ref,
-  computed,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  reactive,
-} from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import {
   HomeFilled,
   PhoneOutlined,
@@ -40,282 +33,54 @@ const handleEmailClick = () => {
   window.open(`mailto:${card.email}`, "_self");
 };
 
-//search functionality
+const cardData = ref([
+  {
+    id: 1,
+    name: "African Black Cafe",
+    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
+    phone: "333-3333-333",
+    email: "support@agilelogix.com",
+    image:
+      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
+  },
 
-const search = ref("");
-
-// watch(search, () => {
-//   card.value = card.filter((card) =>
-//     card.name.toLowerCase().includes(search.value.toLowerCase())
-//   );
-// });
-//apis
-//1.lat,long:
-const message = ref("");
-let latitude = ref("");
-let longitude = ref("");
-const locationInput = ref("");
-
-// const submitLocation = async () => {
-//   try {
-//     const response = await axios.post(
-//       "http://localhost:8080/api/current-location",
-//       {
-//         latitude,
-//         longitude,
-//       }
-//     );
-//     console.log("Location entered successfully:", response.data.message);
-//   } catch (error) {
-//     console.error(
-//       "Error entering location:",
-//       error.response?.data?.error || error.message
-//     );
-//   }
-// };
-const submitLocation = async () => {
-  try {
-    if (!latitude || !longitude) {
-      console.error("Latitude and Longitude are required");
-      return;
-    }
-    const response = await sendLocation(latitude, longitude);
-    console.log("Location entered successfully:", response.data.message);
-  } catch (error) {
-    console.error(
-      "Error entering location:",
-      error.response?.data?.error || error.message
-    );
-  }
-};
-
-// const EnterLocation = async () => {
-//   try {
-//     const response = await axios.get(
-//       `/api/enter-location?location=${location}`
-//     );
-//     console.log("Location entered successfully:", response.data.message);
-//     console.log("locationInput:", locationInput, "Type:", typeof locationInput);
-//   } catch (error) {
-//     console.error(
-//       "Error entering location:",
-//       error.response?.data?.error || error.message
-//     );
-//   }
-// };
-const EnterLocation = async () => {
-  try {
-    const location = locationInput.value; // Access the actual value from the ref
-    const response = await axios.get(
-      `/api/enter-location?location=${location}`
-    );
-    console.log("Location entered successfully:", response.data.message);
-    console.log(
-      "locationInput:",
-      locationInput.value,
-      "Type:",
-      typeof locationInput.value
-    );
-  } catch (error) {
-    console.error(
-      "Error entering location:",
-      error.response?.data?.error || error.message
-    );
-  }
-};
-
-// const EnterLocation = async () => {
-//   try {
-//     const response = await enterLocation(locationInput.value);
-//     console.log("Location entered successfully:", response.data.message);
-//   } catch (error) {
-//     console.error(
-//       "Error entering location:",
-//       error.response?.data?.error || error.message
-//     );
-//   }
-// };
-const page = ref();
-const states = ref([
-  { id: 1, name: "Maharashtra" },
-  { id: 2, name: "Telangana" },
-  { id: 3, name: "Punjab" },
-  { id: 4, name: "Gujarat" },
-  { id: 5, name: "Madhya Pradesh" },
-  { id: 6, name: "Uttar Pradesh" },
+  {
+    id: 2,
+    name: "African Black Cafe",
+    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
+    phone: "333-3333-333",
+    email: "support@agilelogix.com",
+    image:
+      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
+  },
+  {
+    id: 3,
+    name: "African Black Cafe",
+    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
+    phone: "333-3333-333",
+    email: "support@agilelogix.com",
+    image:
+      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
+  },
+  {
+    id: 4,
+    name: "African Black Cafe",
+    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
+    phone: "333-3333-333",
+    email: "support@agilelogix.com",
+    image:
+      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
+  },
+  {
+    id: 5,
+    name: "African Black Cafe",
+    address: "Civic Center Park, 101 14th Ave Denver, CO, 80204",
+    phone: "333-3333-333",
+    email: "support@agilelogix.com",
+    image:
+      "https://b3156083.smushcdn.com/3156083/wp-content/uploads/2023/07/AfricaBlack-146.jpg?lossy=2&strip=1&webp=1",
+  },
 ]);
-
-const filterStates = async (selectedState) => {
-  try {
-    console.log("Selected state:", selectedState);
-    const response = await axios.post(
-      "http://localhost:8080/api/filter-states",
-      { states: [selectedState.name] }
-    );
-    console.log("Filtered states response:", response.data);
-  } catch (error) {
-    console.error(
-      "Error filtering states:",
-      error.response?.data?.error || error.message
-    );
-  }
-};
-
-const selectedState = ref(null);
-const selectedCategory = ref(null);
-
-const handleStateSelection = (e) => {
-  selectedState.value = states.value.find((state) => state.id === e);
-  fetchStores();
-};
-
-const filterCards = () => {
-  fetchStores();
-};
-
-// const filterStoresByCategory = (stores) => {
-//   return axios.post("http://localhost:8080/api/filter_category", { stores });
-// };
-
-//api for filtercategory
-const category = ref([
-  { id: 1, name: "Stationary" },
-  { id: 2, name: "Clothing" },
-  { id: 3, name: "Electronics" },
-  { id: 4, name: "Grocery" },
-  { id: 5, name: "Furniture" },
-]);
-
-const filterStoresByCategory = async (selectedStore) => {
-  try {
-    console.log("Selected store:", selectedStore);
-    const response = await axios.post(
-      "http://localhost:8080/api/filter_category",
-      { stores: [{ category: selectedStore.name }] }
-    );
-    console.log("Filtered stores response:", response.data);
-  } catch (error) {
-    console.error(
-      "Error filtering stores:",
-      error.response?.data?.error || error.message
-    );
-  }
-};
-
-const handleStoreSelection = (e) => {
-  selectedCategory.value = category.value.find((store) => store.id === e);
-  fetchStores();
-};
-
-// const cardData = ref([]);
-// const currentPage = ref(1);
-// const totalPages = ref(0);
-// const limit = 10; // Set limit to 10 cards per page
-
-// const fetchStores = async (page = 1) => {
-//   try {
-//     const response = await axios.get(
-//       `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
-//     );
-//     cardData.value = response.data.stores;
-//     totalPages.value = response.data.totalPages;
-//     currentPage.value = response.data.currentPage;
-//   } catch (error) {
-//     console.error("Error fetching stores:", error.message);
-//   }
-// };
-
-// // Call fetchStores when the component is mounted
-// onMounted(() => fetchStores(currentPage.value));
-
-// // Function to handle pagination
-// const goToPage = (page) => {
-//   if (page > 0 && page <= totalPages.value) {
-//     fetchStores(page);
-//   }
-// };
-const cardData = ref([]);
-const currentPage = ref(1);
-const totalPages = ref(0);
-const limit = 10;
-// const fetchStores = async (page = 1) => {
-//   try {
-//     const response = await axios.get(
-//       `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
-//     );
-//     cardData.value = response.data.stores;
-//     totalPages.value = response.data.totalPages;
-//     currentPage.value = response.data.currentPage;
-
-//     updateMarkersOnMap();
-//   } catch (error) {
-//     console.error("Error fetching stores:", error.message);
-//   }
-// };
-
-//fetchstore code old one
-const filterInputs = reactive({
-  search: "",
-  category: null,
-  state: null,
-});
-
-// Function to handle search
-const handleSearch = () => {
-  fetchStores({ page: 1, ...filterInputs });
-};
-
-// Function to handle filter changes
-
-const fetchStores = async ({ page = 1, search, category, state, lat, lng }) => {
-  try {
-    const params = {
-      page: 1,
-      limit,
-      latitude: typeof lat === "number" && !isNaN(lat) ? lat : null,
-      longitude: typeof lng === "number" && !isNaN(lng) ? lng : null,
-      state: state ? state.name : "",
-      category: category ? category.name : "",
-      // search,
-      state: selectedState.value ? selectedState.value.name : "",
-      category: selectedCategory.value ? selectedCategory.value.name : "",
-      search: search.value,
-    };
-    console.log(params);
-
-    const response = await axios.get("http://localhost:8080/api/stores", {
-      params,
-    });
-    cardData.value = response.data.stores;
-    totalPages.value = response.data.totalPages;
-    currentPage.value = response.data.currentPage;
-    updateMarkersOnMap();
-  } catch (error) {
-    console.error("Error fetching stores:", error.message);
-  }
-};
-
-const handleFiltersChange = () => {
-  fetchStores({ page: 1, ...filterInputs });
-};
-
-watch(filterInputs, handleFiltersChange, { deep: true });
-
-const handleSearchClick = () => {
-  handleSearch();
-};
-onMounted(() => fetchStores({ page: currentPage.value, ...filterInputs }));
-
-// Collect filter inputs
-
-// Function to handle pagination
-const goToPage = async (page) => {
-  if (page > 0 && page <= totalPages.value) {
-    await fetchStoreData(page);
-    updateMarkersOnMap();
-  }
-};
-
 const GOOGLE_MAPS_API_KEY = "AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw";
 
 const autocompleteOptions = {
@@ -338,48 +103,50 @@ const currPos = computed(() => ({
 
 const otherPos = ref(null);
 
-const storeInfo = ref([]);
-const mapDiv = ref(null);
-const map = ref(null);
-let markerCluster = null;
-
 const loader = new Loader({
   apiKey: GOOGLE_MAPS_API_KEY,
   libraries: ["places"],
   version: "weekly",
 });
 
-const fetchStoreData = async (page = 1) => {
-  try {
-    console.log("Fetching store data...", page);
-    const response = await axios.get(
-      `http://localhost:8080/api/stores?page=${page}&limit=${limit}`
-    );
+// const Places = await loader.importLibrary("places");
+// const center = { lat: 34.082298, lng: -82.284777 };
 
-    console.log("Store data fetched:", response.data);
+// const defaultBounds = {
+//   north: center.lat + 0.1,
+//   south: center.lat - 0.1,
+//   east: center.lng + 0.1,
+//   west: center.lng - 0.1,
+// };
+// const input = document.getElementById("place"); //binds to our input element
 
-    if (response.data && Array.isArray(response.data.stores)) {
-      storeInfo.value = response.data.stores;
-      totalPages.value = response.data.totalPages;
-      currentPage.value = response.data.currentPage;
-
-      updateMarkersOnMap();
-    } else {
-      console.error("Fetched data is not an array:", response.data);
-      storeInfo.value = [];
-    }
-
-    // storeInfo.value = response.data;
-    // updateMarkersOnMap();
-  } catch (error) {
-    console.error("Error fetching store data:", error.message);
-  }
-};
-// const handleSearch = () => {
-//   fetchStores(1);
+// console.log("input", input);
+// const options = {
+//   bounds: defaultBounds, //optional
+//   types: ["establishment"], //optioanl
+//   componentRestrictions: { country: "us" }, //limiter for the places api search
+//   fields: ["address_components", "geometry", "icon", "name"], //allows the api to accept these inputs and return similar ones
+//   strictBounds: false, //optional
 // };
 
+// const autocomplete = new Places.Autocomplete(input, options);
+
+// console.log("autocomplete", autocomplete); //optional log but will show you the available methods and properties of the new instance of Places.
+
+// //add the place_changed listener to display results when inputs change
+// autocomplete.addListener("place_changed", () => {
+//   const place = autocomplete.getPlace(); //this callback is inherent you will see it if you logged autocomplete
+//   console.log("place", place);
+// });
+
+const mapDiv = ref(null);
+let map = ref(null);
+let clickListener = null;
+// let isGoogleApiLoaded = ref(false);
+
 onMounted(async () => {
+  console.log("Component mounted, loading Google Maps...");
+
   console.log("Component mounted, loading Google Maps...");
 
   await loader.load();
@@ -389,208 +156,68 @@ onMounted(async () => {
     center: { lat: 20, lng: 80 }, // Default center if no stores are available
     zoom: 7,
   });
-  console.log("Google Map initialized");
-
-  fetchStoreData();
+  clickListener = map.value.addListener(
+    "click",
+    ({ latLng: { lat, lng } }) => (otherPos.value = { lat: lat(), lng: lng() })
+  );
 });
-
-const updateMarkersOnMap = () => {
-  if (!map || !storeInfo.value.length === 0) {
-    console.log("Map not initialized or no store data available");
-
-    return;
-  }
-
-  if (markerCluster) {
-    console.log("Clearing existing markers...");
-
-    markerCluster.clearMarkers();
-  }
-  // console.log("Updating markers on map...");
-
-  console.log("Creating new markers...");
-
-  const markers = storeInfo.value.map((card) => {
-    const location = card.location;
-    let lat,
-      lng = 0;
-    if (location) {
-      const coords = location.coordinates;
-      if (coords) {
-        lat = coords[1];
-        lng = coords[0];
-
-        // rest of the markers code goes below
-      }
-    }
-    const marker = new google.maps.Marker({
-      position: { lat: lat, lng: lng },
-      map: map.value,
-      title: card.name,
-    });
-
-    const infoWindow = new google.maps.InfoWindow({
-      content: `<h3>${card.name}</h3><p>${card.address}</p> <p>${card.email}</p>`,
-    });
-
-    marker.addListener("click", () => {
-      infoWindow.open(map.value, marker);
-    });
-
-    return marker;
-  });
-
-  markerCluster = new MarkerClusterer({
-    map: map.value,
-    markers,
-    imagePath:
-      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
-  });
-  console.log("Markers updated and clustered");
-};
-
-const nextPage = async () => {
-  if (currentPage.value < totalPages.value) {
-    await fetchStoreData(currentPage.value + 1);
-    updateMarkersOnMap();
-  }
-};
-
-const prevPage = async () => {
-  if (currentPage.value > 1) {
-    await fetchStoreData(currentPage.value - 1);
-    updateMarkersOnMap();
-  }
-};
-
-onBeforeUnmount(() => {
-  console.log("Component is about to unmount, clearing markers...");
-
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-  }
-});
-// const getAddressData = (addressData, placeResultData) => {
-//   latitude.value = placeResultData.geometry.location.lat();
-//   longitude.value = placeResultData.geometry.location.lng();
-//   fetchStores(1); // Fetch stores based on the updated latitude and longitude
-// };
-
-// const getAddressData = (addressData, placeResultData) => {
-//   const { lat, lng } = placeResultData.geometry.location; // Extract lat and lng from placeResultData
-//   if (typeof lat === "number" && !isNaN(lat)) {
-//     latitude.value = lat.toFixed(6);
-//   } else {
-//     console.error("Invalid latitude value:", lat);
-//   }
-
-//   if (typeof lng === "number" && !isNaN(lng)) {
-//     longitude.value = lng.toFixed(6);
-//   } else {
-//     console.error("Invalid longitude value:", lng);
-//   }
-//   console.log("Address data: ", addressData);
-
-//   fetchStores(1);
-
-//   console.log("Address data: ", addressData);
-//   if (addressData && addressData.geometry) {
-//     const location = addressData.geometry.location;
-//     latitude = location.lat();
-//     longitude = location.lng();
-//     submitLocation(); // Calling the submitLocation function here
-//   }
-// };
-
-const getAddressData = (addressData, placeResultData) => {
-  // const lat = placeResultData.geometry.location.lat();
-  const { lat, lng } = placeResultData.geometry.location;
-  if (typeof lat === "number" && !isNaN(lat) && lat > 0) {
-    addressData.latitude.value = lat.toFixed(6);
-  } else {
-    console.error("Invalid latitude value:", lat);
-  }
-
-  if (typeof lng === "number" && !isNaN(lng) && lng > 0) {
-    addressData.longitude.value = lng.toFixed(6);
-  } else {
-    console.error("Invalid longitude value:", lng);
-  }
-
-  fetchStores(1, lat, lng);
-
-  console.log("Address data: ", addressData);
-
-  setTimeout(() => {
-    if (
-      addressData &&
-      typeof addressData.latitude === "number" &&
-      typeof addressData.longitude === "number"
-    ) {
-      console.log(
-        "Address latitude:",
-        addressData.latitude,
-        "Address longitue:",
-        addressData.longitude
-      );
-    } else {
-      console.error(
-        "Address latitude & longitude is invalid or not available."
-      );
-    }
-  }, 1000);
-
-  if (addressData && addressData.geometry) {
-    const location = addressData.geometry.location;
-    latitude = location.lat();
-    longitude = location.lng();
-    submitLocation();
-  }
-};
-onMounted(() => {
-  const numericLat = Number(latitude.value);
-  const numericLng = Number(longitude.value);
-  fetchStores(currentPage.value, numericLat, numericLng);
-});
-
-/////////////////////////////////////
 
 onMounted(async () => {
-  const loader = new Loader({
-    apiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
-    version: "weekly",
-  });
-  console.log("loader", loader);
-  const Places = await loader.importLibrary("places");
-
-  const center = { lat: 34.082298, lng: -82.284777 };
-
-  const defaultBounds = {
-    north: center.lat + 0.1,
-    south: center.lat - 0.1,
-    east: center.lng + 0.1,
-    west: center.lng - 0.1,
-  };
-
-  const input = document.getElementById("place"); //binds to our input element
-
-  console.log("input", input);
-  const options = {
-    bounds: defaultBounds,
-    types: ["establishment"],
-    componentRestrictions: { country: "IN" },
-    fields: ["address_components", "geometry", "icon", "name"],
-    strictBounds: false,
-  };
-
-  const autocomplete = new Places.Autocomplete(input, options);
-
-  console.log("autocomplete", autocomplete);
-  autocomplete.addListener("place_changed", () => {
-    const place = autocomplete.getPlace();
-    console.log("place", place);
-  });
+  if (clickListener) clickListener.remove();
 });
+
+// onBeforeUnmount(() => {
+//   if (clickListener) clickListener.remove();
+// });
+
+// onMounted(){
+//   const originAutocomplete=new google.maps.places.Autocomplete(
+//     this.$refs["origin"],
+//     {
+//       bounds
+//     }z
+//   );
+
+// }
+
+const locatorButtonPressed = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.getAddressFrom(position.coords.latitude, position.coords.latitude);
+
+        // console.log(latitude.value, longitude.value);
+      },
+      (error) => {
+        errorMessage.value = error.message;
+        console.log(errorMessage.value);
+      }
+    );
+  } else {
+    console.log("Your browser does not support geolocation.");
+  }
+};
+
+const getAddressFrom = (lat, long) => {
+  axios
+    .get(
+      "https://maps.googleapis.com/maps/api/geocode/json?latlng=" +
+        lat +
+        "," +
+        long +
+        "&key=AIzaSyDBBipgwyczwFN2wAv5Q04WMifIwL80DYw"
+    )
+    .then((response) => {
+      if (response.data.error_message) {
+        console.log(response.data.error_message);
+      } else {
+        console.log(response.results[0].formatted_address);
+      }
+    })
+    .catch((error) => {
+      console.log("error.message");
+    });
+};
 </script>
 
 <template>
@@ -601,55 +228,35 @@ onMounted(async () => {
         <a-card
           style="width: 300px; display: flex; justify-content: space-between"
         >
-          <div class="heading" style="align-content: flex-start">
-            <h2>Search Stores Here:</h2>
-          </div>
+          <!-- <h3 class="left-header">Find a store</h3>
+          <h3 class="right-header" @click="locatorButtonPressed">
+            Use Current location
+          </h3> -->
+          <input type="text" placeholder="current address" />
+          <i class="dot clicrcle click" @click="locatorButtonPressed()"></i>
 
-          <!-- Input for entering location -->
-
+          <!-- <a-space direction="vertical">
+            <a-input-search
+              class="search"
+              ref="origin"
+              v-model:value="value"
+              placeholder="Enter Location Here"
+              style="width: 250px"
+              @search="onSearch"
+            />
+          </a-space> -->
+          <!-- 
           <vue-google-autocomplete
             id="map"
             classname="form-control"
-            placeholder="Enter Destination"
-            :api-key="GOOGLE_MAPS_API_KEY"
-            :options="autocompleteOptions"
-            @placechanged="getAddressData"
-          ></vue-google-autocomplete>
-          <!-- <a-input-search
-            type="text"
-            v-model.trim="search"
-            placeholder="Enter Desired location"
-            enter-button
-            @click="filterCards()"
-            size="large"
-          /> -->
-          <!-- <button @click="filterCards()">Submit</button> -->
-          <!-- <p>{{ message }}</p> -->
+            placeholder="Start typing"
+            v-on:placechanged="getAddressData"
+          >
+          </vue-google-autocomplete> -->
 
-          <!-- Inputs for latitude and longitude -->
-          <!-- <p>Your current location:</p>
-          <div>
-            <label for="latitude">Latitude:</label>
-            <input
-              type="text"
-              id="latitude"
-              v-model="latitude"
-              placeholder="Enter latitude"
-            />
+          <input id="place" type="text" placeholder="Enter a location" />
 
-            <label for="longitude">Longitude:</label>
-            <input
-              type="text"
-              id="longitude"
-              v-model="longitude"
-              placeholder="Enter longitude"
-            />
-
-            <button @click="submitLocation">Submit Location</button>
-          </div>
-          <br /> -->
-
-          <!-- Dropdown for filtering stores -->
+          <br />
           <div class="dropdown-left">
             <a-dropdown>
               <a class="ant-dropdown-link" @click.prevent>Filter Stores by</a>
@@ -667,16 +274,7 @@ onMounted(async () => {
             </a-dropdown>
             <br />
           </div>
-          <button @click="handleSearchClick">submit</button>
-          <!-- <button @click="handleSearch()">Search</button> -->
-          <br />
-          <br />
 
-          <!-- <div class="submit">
-            <a-button @click="filterCards()">Submit</a-button>
-          </div> -->
-
-          <!-- Dropdown for selecting a state -->
           <div class="dropdown-right">
             <a-dropdown>
               <a class="ant-dropdown-link" @click.prevent>State</a>
@@ -707,11 +305,7 @@ onMounted(async () => {
       <div v-for="card in cardData" :key="card.id" class="card">
         <a-card style="width: 300px">
           <h2>{{ card.name }}</h2>
-          <p>{{ card.email }}</p>
-          <p>Address:{{ card.address }}</p>
-          <p>contact.no:{{ card.mobile }}</p>
-          <!-- <p>{{ card.latitude }}</p>
-          <p>{{ card.longitude }}</p> -->
+          <HomeFilled class="icon-large" />
 
           <a-dropdown>
             <a class="ant-dropdown-link" @click.prevent>Stores Opens at:</a>
@@ -739,6 +333,10 @@ onMounted(async () => {
             </template>
           </a-dropdown>
 
+          <p>{{ card.address }}</p>
+          <p @click="handleCallButtonClick">
+            <PhoneOutlined /> {{ card.phone }}
+          </p>
           <div class="buttons">
             <a-button
               type="primary"
@@ -839,13 +437,10 @@ onMounted(async () => {
   margin-top: 20px;
 }
 .black-button {
-  background-color: #000;
-  color: #fff;
-  border-radius: 0;
-  border: none;
-}
-.submit {
-  margin-bottom: 10px;
+  background-color: #000; /* Black background color */
+  color: #fff; /* White text color */
+  border-radius: 0; /* No border radius (sharp corners) */
+  border: none; /* No border */
 }
 /* Hover style (optional) */
 .black-button:hover {
