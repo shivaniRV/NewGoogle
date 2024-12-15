@@ -168,13 +168,16 @@ const getStores = async (req, res, next) => {
 
         if (state) {
             query.state = state;
+
         }
+        console.log(state)
 
         if (category) {
             query.category = category;
         }
+        console.log(category)
 
-        if (!isNaN(latitude) && !isNaN(longitude)) { // Check if latitude and longitude are valid numbers
+        if (!isNaN(latitude) && !isNaN(longitude) && latitude>0 && longitude>0) { // Check if latitude and longitude are valid numbers
             const lat = parseFloat(latitude);
             const lng = parseFloat(longitude);
 

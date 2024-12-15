@@ -1,5 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  reactive,
+} from "vue";
 import {
   HomeFilled,
   PhoneOutlined,
@@ -128,7 +135,7 @@ const EnterLocation = async () => {
 //     );
 //   }
 // };
-
+const page = ref();
 const states = ref([
   { id: 1, name: "Maharashtra" },
   { id: 2, name: "Telangana" },
@@ -246,17 +253,35 @@ const limit = 10;
 //   }
 // };
 
-const fetchStores = async (page = 1, lat, lng) => {
+//fetchstore code old one
+const filterInputs = reactive({
+  search: "",
+  category: null,
+  state: null,
+});
+
+// Function to handle search
+const handleSearch = () => {
+  fetchStores({ page: 1, ...filterInputs });
+};
+
+// Function to handle filter changes
+
+const fetchStores = async ({ page = 1, search, category, state, lat, lng }) => {
   try {
     const params = {
-      page,
+      page: 1,
       limit,
       latitude: typeof lat === "number" && !isNaN(lat) ? lat : null,
       longitude: typeof lng === "number" && !isNaN(lng) ? lng : null,
+      state: state ? state.name : "",
+      category: category ? category.name : "",
+      // search,
       state: selectedState.value ? selectedState.value.name : "",
       category: selectedCategory.value ? selectedCategory.value.name : "",
       search: search.value,
     };
+    console.log(params);
 
     const response = await axios.get("http://localhost:8080/api/stores", {
       params,
@@ -270,7 +295,18 @@ const fetchStores = async (page = 1, lat, lng) => {
   }
 };
 
-onMounted(() => fetchStores(currentPage.value));
+const handleFiltersChange = () => {
+  fetchStores({ page: 1, ...filterInputs });
+};
+
+watch(filterInputs, handleFiltersChange, { deep: true });
+
+const handleSearchClick = () => {
+  handleSearch();
+};
+onMounted(() => fetchStores({ page: currentPage.value, ...filterInputs }));
+
+// Collect filter inputs
 
 // Function to handle pagination
 const goToPage = async (page) => {
@@ -339,9 +375,9 @@ const fetchStoreData = async (page = 1) => {
     console.error("Error fetching store data:", error.message);
   }
 };
-const handleSearch = () => {
-  fetchStores(1);
-};
+// const handleSearch = () => {
+//   fetchStores(1);
+// };
 
 onMounted(async () => {
   console.log("Component mounted, loading Google Maps...");
@@ -375,8 +411,20 @@ const updateMarkersOnMap = () => {
   console.log("Creating new markers...");
 
   const markers = storeInfo.value.map((card) => {
+    const location = card.location;
+    let lat,
+      lng = 0;
+    if (location) {
+      const coords = location.coordinates;
+      if (coords) {
+        lat = coords[1];
+        lng = coords[0];
+
+        // rest of the markers code goes below
+      }
+    }
     const marker = new google.maps.Marker({
-      position: { lat: card.latitude, lng: card.longitude },
+      position: { lat: lat, lng: lng },
       map: map.value,
       title: card.name,
     });
@@ -455,15 +503,16 @@ onBeforeUnmount(() => {
 // };
 
 const getAddressData = (addressData, placeResultData) => {
-  const { lat, lng } = placeResultData.geometry.location; // Extract lat and lng from placeResultData
-  if (typeof lat === "number" && !isNaN(lat)) {
-    latitude.value = lat.toFixed(6);
+  // const lat = placeResultData.geometry.location.lat();
+  const { lat, lng } = placeResultData.geometry.location;
+  if (typeof lat === "number" && !isNaN(lat) && lat > 0) {
+    addressData.latitude.value = lat.toFixed(6);
   } else {
     console.error("Invalid latitude value:", lat);
   }
 
-  if (typeof lng === "number" && !isNaN(lng)) {
-    longitude.value = lng.toFixed(6);
+  if (typeof lng === "number" && !isNaN(lng) && lng > 0) {
+    addressData.longitude.value = lng.toFixed(6);
   } else {
     console.error("Invalid longitude value:", lng);
   }
@@ -495,7 +544,7 @@ const getAddressData = (addressData, placeResultData) => {
     const location = addressData.geometry.location;
     latitude = location.lat();
     longitude = location.lng();
-    submitLocation(); // Calling the submitLocation function here
+    submitLocation();
   }
 };
 onMounted(() => {
@@ -504,7 +553,7 @@ onMounted(() => {
   fetchStores(currentPage.value, numericLat, numericLng);
 });
 
-/////////////////////////////////
+/////////////////////////////////////
 
 onMounted(async () => {
   const loader = new Loader({
@@ -514,9 +563,8 @@ onMounted(async () => {
   console.log("loader", loader);
   const Places = await loader.importLibrary("places");
 
-  // the center, defaultbounds are not necessary but are best practices to limit/focus search results
   const center = { lat: 34.082298, lng: -82.284777 };
-  // Create a bounding box with sides ~10km away from the center point
+
   const defaultBounds = {
     north: center.lat + 0.1,
     south: center.lat - 0.1,
@@ -619,7 +667,8 @@ onMounted(async () => {
             </a-dropdown>
             <br />
           </div>
-          <button @click="handleSearch()">Search</button>
+          <button @click="handleSearchClick">submit</button>
+          <!-- <button @click="handleSearch()">Search</button> -->
           <br />
           <br />
 
